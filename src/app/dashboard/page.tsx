@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth"
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { TicketItem } from "./components/ticket";
+import prismaClient from "@/lib/prisma";
+import { ButtonRefresh } from "./components/button";
 
 
 export default async function Dashboard() {
@@ -14,14 +16,31 @@ export default async function Dashboard() {
         redirect("/")
     }
 
+    const tickets = await prismaClient.ticket.findMany({
+        where: {
+            status: "ABERTO",
+            customer: {
+                userId: session.user.id
+            }
+        },
+        include: {
+            customer: true,
+        }
+    })
+    console.log(tickets);
+
     return (
         <Container>
             <main className="mt-9 mb-2">
                 <div className="flex justify-between items-center">
                     <h1 className="text-3xl font-bold">Chamados</h1>
-                    <Link href='/dashboard/new' className="bg-blue-500 px-4 py-1 rounded text-white">
-                        Abrir chamado
-                    </Link>
+                    <div className="flex gap-3 items-center">
+                        <ButtonRefresh />
+                        <Link href='/dashboard/new' className="bg-blue-500 px-4 py-1 rounded text-white">
+                            Abrir chamado
+                        </Link>
+
+                    </div>
                 </div>
 
                 <table className="min-w-full my-2">
@@ -34,12 +53,18 @@ export default async function Dashboard() {
                         </tr>
                     </thead>
                     <tbody>
-                        <TicketItem />
-                        <TicketItem />
-
+                        {tickets.map(ticket => (
+                            <TicketItem
+                                key={ticket.id}
+                                ticket={ticket}
+                                customer={ticket.customer}
+                            />
+                        ))}
                     </tbody>
-
                 </table>
+                {tickets.length === 0 && (
+                    <h1 className="px-2 text-gray-600">Nenhum ticket aberto foi encontrado...</h1>
+                )}
             </main>
 
         </Container>

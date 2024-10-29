@@ -22,7 +22,6 @@ export function Input({ name, placeholder, type, register, rules, error }: Input
                 id={name}
             />
             {error && <p className="text-red-500 my-1">{error}</p>}
-
         </>
     )
-}
+}          
